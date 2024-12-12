@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Task Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #1a73e8;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        div {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 70%;
+            font-size: 16px;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 5px rgba(26, 115, 232, 0.2);
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+
+        button:hover {
+            background-color: #1557b0;
+        }
+
+        .delete-btn {
+            background-color: #dc3545;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+
+        .delete-btn:hover {
+            background-color: #bb2d3b;
+        }
+
+        .edit-btn {
+            background-color: #28a745;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+
+        .edit-btn:hover {
+            background-color: #218838;
+        }
+
+        #error-message {
+            color: #d93025;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        #taskList {
+            list-style: none;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            color: #666;
+        }
+
+        .task-text {
+            flex-grow: 1;
+        }
+
+        .stats {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            input[type="text"] {
+                width: 60%;
+            }
+
+            button {
+                padding: 10px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Task Tracker</h1>
+    <div class="stats" id="taskStats">
+        Total: 0 | Completed: 0 | Pending: 0
+    </div>
+    <div>
+        <input type="text" id="taskInput" placeholder="Enter task">
+        <button id="addTask">Add Task</button>
+    </div>
+    <div id="error-message"></div>
+    <ul id="taskList"></ul>
+
+    <script type="module">
+        
+        let tasks = [];
+        const taskInput = document.getElementById('taskInput');
+        const taskList = document.getElementById('taskList');
+        const errorMessage = document.getElementById('error-message');
+        const taskStats = document.getElementById('taskStats');
+
+        // Arrow Functions
+        const clearError = () => {
+            errorMessage.textContent = '';
+        };
+
+        const updateStats = () => {
+            const completed = tasks.filter(task => task.completed).length;
+            const total = tasks.length;
+            const pending = total - completed;
+            taskStats.textContent = `Total: ${total} | Completed: ${completed} | Pending: ${pending}`;
+        };
+
+        // Closure
+        const createTaskCounter = () => {
+            let count = 0;
+            return () => ++count;
+        };
+        const getNextId = createTaskCounter();
+
+        // Promise-based task operations
+        const simulateDelay = () => new Promise(resolve => setTimeout(resolve, 500));
+
+        // Async function 
+        async function addTask(taskText) {
+            try {
+                await simulateDelay();
+                
+                const task = {
+                    id: getNextId(),
+                    text: taskText,
+                    completed: false
+                };
+                
+                tasks.push(task);
+                renderTask(task);
+                taskInput.value = '';
+                updateStats();
+            } catch (error) {
+                errorMessage.textContent = 'Error adding task';
+            }
+        }
+
+        // Async function
+        async function deleteTask(id) {
+            try {
+                await simulateDelay();
+                tasks = tasks.filter(task => task.id !== id);
+                updateStats();
+            } catch (error) {
+                errorMessage.textContent = 'Error deleting task';
+            }
+        }
+
+        // DOM Manipulation and Event Listeners
+        function renderTask(task) {
+            const li = document.createElement('li');
+            li.className = 'task-item';
+            li.dataset.id = task.id;
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = task.completed;
+            
+            const span = document.createElement('span');
+            span.textContent = task.text;
+            span.className = 'task-text';
+            if (task.completed) span.classList.add('completed');
+            
+            const editBtn = document.createElement('button');
+            editBtn.textContent = 'Edit';
+            editBtn.className = 'edit-btn';
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.className = 'delete-btn';
+            
+            // Event Listeners
+            checkbox.addEventListener('change', () => {
+                task.completed = checkbox.checked;
+                span.classList.toggle('completed');
+                updateStats();
+            });
+            
+            editBtn.addEventListener('click', async () => {
+                const newText = prompt('Edit task:', task.text);
+                if (newText?.trim()) {
+                    await simulateDelay();
+                    task.text = newText.trim();
+                    span.textContent = task.text;
+                }
+            });
+            
+            deleteBtn.addEventListener('click', async () => {
+                await deleteTask(task.id);
+                li.remove();
+            });
+            
+            li.appendChild(checkbox);
+            li.appendChild(span);
+            li.appendChild(editBtn);
+            li.appendChild(deleteBtn);
+            taskList.appendChild(li);
+        }
+
+        // Event Listeners with Async/Await
+        document.getElementById('addTask').addEventListener('click', async () => {
+            const text = taskInput.value.trim();
+            if (text) {
+                clearError();
+                await addTask(text);
+            } else {
+                errorMessage.textContent = 'Please enter a task';
+            }
+        });
+
+        taskInput.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter') {
+                const text = taskInput.value.trim();
+                if (text) {
+                    clearError();
+                    await addTask(text);
+                } else {
+                    errorMessage.textContent = 'Please enter a task';
+                }
+            }
+        });
+
+        
+        addTask('Learn JavaScript concepts');
+    </script>
+</body>
+</html>
